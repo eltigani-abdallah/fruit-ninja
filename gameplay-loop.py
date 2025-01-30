@@ -18,7 +18,16 @@ SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Fruit Ninja')
 
+WHITE=(255,255,255)
+BLACK=(0,0,0)
+LIGHTBLUE=(173,216,230)
+
+#list of all uppercase letters A-Z
 letter_list=list(string.ascii_uppercase)
+
+#score and lives for gameplay loop
+score=0
+
 
 # Background image
 try:
@@ -30,8 +39,8 @@ except FileNotFoundError:
     exit()
 
 # Load fruit images
-fruit_names = ["kiwi.png", "pineapple.png", "grape.png", "lemon.png", "watermelon.png", "orange.png", "passionfruit.png", "mango.png", "strawberry.png", "dragonfruit.png", "banana.png", "pomegranate.png", "bomb1.png", 
-"bomb2.png","bomb3.png", "ice.png"]
+fruit_names = ["kiwi.png", "pineapple.png", "grape.png", "lemon.png", "watermelon.png", "orange.png", "passionfruit.png", "mango.png", "strawberry.png", "dragonfruit.png", "banana.png", "pomegranate.png", 
+"bomb2.png", "ice.png"]
 
 fruit_images = []
 for name in fruit_names:
@@ -63,18 +72,13 @@ class Fruit:
         self.gravity = gravity
         self.active = True
         self.letter= letter
-        self.type=type
-
+        self.type= type
+        
     def move(self):
         if self.active:
             self.x += self.speed_x
             self.y -= self.speed_y  # Launching upwards
             self.speed_y -= self.gravity  # Gravity slows down ascent and speeds up fall
-
-            # If the fruit goes off-screen from the bottom, deactivate it
-            if self.y > SCREEN_HEIGHT:
-                self.active = False
-            
 
 
     def draw(self, surface):
@@ -82,7 +86,6 @@ class Fruit:
         if self.active:
             surface.blit(self.image, (self.x, self.y))
             print_text(surface, self.x,self.y,self.letter,50, (255,255,255))
-            
 
 
 
@@ -104,7 +107,7 @@ def create_fruit_batch(batch_size):
         else:
             fruit_type="fruit"
         fruit_letter=random.choice(letter_list)
-        fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type))
+        fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type, ))
     return fruits
 
 # Game variables
@@ -122,32 +125,52 @@ start_time = pygame.time.get_ticks()
 # TODO add strike system
 
 game_running = True
-
+lives=3
 while game_running:
+
+    # Draw the background
+    screen.blit(background_image, (0, 0))
+    print_text(screen, 0,0,f"Score: {score}", 50,WHITE)
+    print_text(screen, 1075, 0, f"lives: {lives}",50, WHITE)
+
+    for fruit in fruits:
+        if fruit.y>SCREEN_HEIGHT and fruit.type!="bomb" and fruit.type!="ice":
+            fruit.active=False
+            print("missed me!")
+            lives-=1
+        if fruit.type!="ice":
+            fruit.active=False
+                
+
+                
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_running = False
         if event.type==pygame.KEYDOWN:
             pinput=event.unicode.upper()
+            if pinput=="Å":
+                lives=3
             for fruit in fruits:
                 if fruit.active and pinput==fruit.letter:
                     if fruit.type== "bomb":
                         print("BOOM")
                         fruit.active=False
-                        #TODO add game loss
+                        lives=-1
                     elif fruit.type== "ice":
                         print("TOKI YO, TOMARE!!")
+                        print_text(screen,400, 50, "SLO-MO", 50, LIGHTBLUE)
+                        clock.tick(15)
+                        if current_time==5:
+                            clock.tick(60)
+
+                        fruit.active=False
                         #TODO add time stop
                     else:
+                        score+=1
                         fruit.active=False
-
-    # Draw the background
-    screen.blit(background_image, (0, 0))
-
             
 
-    
 
     # Check if it's time to add a new batch of fruits
     current_time = pygame.time.get_ticks()
@@ -157,7 +180,6 @@ while game_running:
         fruits.extend(create_fruit_batch(batch_size))
         current_batch += 1
 
-    
     # Move and draw the fruits
     for fruit in fruits:
         fruit.move()
@@ -165,6 +187,10 @@ while game_running:
 
     # Remove inactive fruits
     fruits = [fruit for fruit in fruits if fruit.active]
+
+    if lives<0:
+        #placeholder loss screen
+        print_text(screen, 400, SCREEN_HEIGHT/2, "GAME OVER", 100, WHITE)
 
     pygame.display.flip()
     clock.tick(60)  
