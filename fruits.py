@@ -1,122 +1,168 @@
-import pygame 
+
+import pygame  
 import random
 import os
+import string
 
-# Définir le chemin du dossier du script
+# Define the script directory path
 BASE_DIR = os.path.dirname(__file__)
 
-# Vérification du répertoire de travail actuel
-print("Répertoire de travail actuel :", os.getcwd())
-
-# Initialisation de pygame
+# Initialize pygame
 pygame.init()
 
-# Dimensions de l'écran
-LARGEUR_ECRAN = 1200
-HAUTEUR_ECRAN = 600
-screen = pygame.display.set_mode((LARGEUR_ECRAN, HAUTEUR_ECRAN))
+# Load sounds
+pygame.mixer.init()
+background_music = os.path.join(BASE_DIR, "chinatown-chinese-new-year-celebration-276682 (1).mp3")
+sound_fruit = pygame.mixer.Sound(os.path.join(BASE_DIR, "S0000017.NSF_00016.wav"))
+sound_bomb = pygame.mixer.Sound(os.path.join(BASE_DIR, "S0000003.NSF_00035.wav"))
+sound_keypress = pygame.mixer.Sound(os.path.join(BASE_DIR, "S000000C.NSF_00038.wav"))
+sound_explosion = pygame.mixer.Sound(os.path.join(BASE_DIR, "S0000038.NSF_00031.wav"))
+sound_ice = pygame.mixer.Sound(os.path.join(BASE_DIR, "Crystal_Blocker_Vanish.wav"))
+sound_pomegranate = pygame.mixer.Sound(os.path.join(BASE_DIR, "S0000004.NSF_00000.wav"))
+
+# Play background music
+pygame.mixer.music.load(background_music)
+pygame.mixer.music.play(-1)  # Loop indefinitely
+
+# Screen dimensions
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Fruit Ninja')
 
-# Fond d'écran
+letter_list = list(string.ascii_uppercase)
+
+# Load background image
 try:
-    image_fond = pygame.image.load(os.path.join(BASE_DIR, "background.jpg"))
-    image_fond = pygame.transform.scale(image_fond, (LARGEUR_ECRAN, HAUTEUR_ECRAN))
+    background_image = pygame.image.load(os.path.join(BASE_DIR, "background3.jpg"))
+    background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 except FileNotFoundError:
-    print("background.jpg introuvable.")
+    print("background3.jpg not found.")
     pygame.quit()
     exit()
 
-# Chargement des images de fruits
-noms_fruits = ["1.png", "2.png", "3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "111.png", "b1.png", 
-               "b2.png", "gl2.png"]
+# Load fruit images
+fruit_names = ["kiwi.png", "pineapple.png", "grape.png", "lemon.png", "watermelon.png", "orange.png", "passionfruit.png", "mango.png", "strawberry.png", "dragonfruit.png", "banana.png", "pomegranate.png", "bomb1.png", "bomb2.png", "bomb3.png", "ice.png"]
 
-images_fruits = []
-for nom in noms_fruits:
+fruit_images = []
+for name in fruit_names:
     try:
-        chemin_image = os.path.join(BASE_DIR, nom)
-        images_fruits.append(pygame.image.load(chemin_image))
+        image_path = os.path.join(BASE_DIR, name)
+        fruit_images.append(pygame.image.load(image_path))
     except FileNotFoundError:
-        print(f"Erreur de chargement : fichier {nom} introuvable !")
+        print(f"Loading error: file {name} not found!")
         pygame.quit()
         exit()
 
-# Classe pour les fruits
+font = pygame.font.Font(None, 48)
+
+def draw_text(surface, text, pos):
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_outline = font.render(text, True, (0, 0, 0))
+    surface.blit(text_outline, (pos[0] - 2, pos[1] - 2))
+    surface.blit(text_outline, (pos[0] + 2, pos[1] - 2))
+    surface.blit(text_outline, (pos[0] - 2, pos[1] + 2))
+    surface.blit(text_outline, (pos[0] + 2, pos[1] + 2))
+    surface.blit(text_surface, pos)
+
 class Fruit:
-    def __init__(self, image, x, y, vitesse_x, vitesse_y, gravite):
-        self.image = pygame.transform.scale(image, (120, 120))  # Taille du fruit
+    def __init__(self, image, x, y, speed_x, speed_y, gravity, letter, type):
+        self.image = pygame.transform.scale(image, (120, 120))
         self.x = x
         self.y = y
-        self.vitesse_x = vitesse_x
-        self.vitesse_y = vitesse_y
-        self.gravite = gravite
-        self.actif = True
+        self.speed_x = speed_x
+        self.speed_y = speed_y
+        self.gravity = gravity
+        self.active = True
+        self.letter = letter
+        self.type = type
+        
+        if self.type == "bomb":
+            sound_bomb.play()
+        else:
+            sound_fruit.play()
 
-    def deplacer(self):
-        if self.actif:
-            self.x += self.vitesse_x
-            self.y -= self.vitesse_y  # Lancement vers le haut
-            self.vitesse_y -= self.gravite  # La gravité ralentit la montée et accélère la chute
+    def move(self):
+        if self.active:
+            self.x += self.speed_x
+            self.y -= self.speed_y  
+            self.speed_y -= self.gravity  
+            if self.y > SCREEN_HEIGHT:
+                self.active = False
 
-            # Si le fruit sort de l'écran par le bas, on le désactive
-            if self.y > HAUTEUR_ECRAN:
-                self.actif = False
-
-    def dessiner(self, surface):
-        if self.actif:
+    def draw(self, surface):
+        if self.active:
             surface.blit(self.image, (self.x, self.y))
+            draw_text(surface, self.letter, (self.x + 45, self.y + 45))
 
-# Fonction pour créer un lot de fruits
-def creer_lot_fruits(taille_lot):
+def create_fruit_batch(batch_size):
     fruits = []
-    for _ in range(taille_lot):
-        x = random.randint(100, LARGEUR_ECRAN - 100)  # Position X de départ
-        y = HAUTEUR_ECRAN  # Les fruits commencent en bas
-        vitesse_x = random.uniform(-5, 5)  
-        vitesse_y = random.uniform(16, 20)  
-        gravite = 0.35  # Force de gravité
-        image_fruit = random.choice(images_fruits)
-        fruits.append(Fruit(image_fruit, x, y, vitesse_x, vitesse_y, gravite))
+    for _ in range(batch_size):
+        x = random.randint(400, SCREEN_WIDTH - 400)
+        y = SCREEN_HEIGHT
+        speed_x = random.uniform(-5, 5)
+        speed_y = random.uniform(16, 20)
+        gravity = 0.35
+        fruit_image = random.choice(fruit_images)
+        fruit_name = fruit_names[fruit_images.index(fruit_image)]
+        
+        if "bomb" in fruit_name.lower():
+            fruit_type = "bomb"
+            fruit_letter = "B"
+        elif "ice" in fruit_name.lower():
+            fruit_type = "ice"
+            fruit_letter = random.choice(letter_list)
+        else:
+            fruit_type = "fruit"
+            fruit_letter = random.choice(letter_list)
+        
+        fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type))
     return fruits
 
-# Variables du jeu
-lots_fruits = [1, 1, 2, 2, 3, 2, 3, 3, 4, 2, 5, 3, 3, 4, 5, 3, 5, 2, 4, 2, 5, 3, 7, 4, 5, 3, 6, 1]  # Séquence des lots
-lot_actuel = 0
+fruit_batches = [1, 1, 2, 2, 3, 2, 3, 3, 4, 2, 5, 3, 3, 4, 5, 3, 5, 2, 4, 2, 5, 3, 7, 4, 5, 3, 6, 1]
+current_batch = 0
 fruits = []
-timer_prochain_lot = 0
-intervalle_lots = 2000  # Intervalle entre les lots (en millisecondes)
+next_batch_timer = 0
+batch_interval = 2000
+clock = pygame.time.Clock()
+start_time = pygame.time.get_ticks()
 
-# Horloge pour gérer les FPS
-horloge = pygame.time.Clock()
-temps_depart = pygame.time.get_ticks()
+game_running = True
 
-# Boucle du jeu
-jeu_en_cours = True
-while jeu_en_cours:
+while game_running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            jeu_en_cours = False
+            game_running = False
+        if event.type == pygame.KEYDOWN:
+            sound_keypress.play()
+            pinput = event.unicode.upper()
+            for fruit in fruits:
+                if fruit.active and pinput == fruit.letter:
+                    if fruit.type == "bomb":
+                        sound_explosion.play()
+                        print("BOOM")
+                        fruit.active = False
+                    elif fruit.type == "ice":
+                        sound_ice.play()
+                        print("TOKI YO, TOMARE!!")
+                    else:
+                        fruit.active = False
 
-    # Mise à jour de l'écran
-    screen.blit(image_fond, (0, 0))
+    screen.blit(background_image, (0, 0))
+    
+    current_time = pygame.time.get_ticks()
+    if current_time - next_batch_timer > batch_interval and current_batch < len(fruit_batches):
+        next_batch_timer = current_time
+        batch_size = fruit_batches[current_batch]
+        fruits.extend(create_fruit_batch(batch_size))
+        current_batch += 1
 
-    # Vérifier s'il est temps d'ajouter un nouveau lot de fruits
-    temps_actuel = pygame.time.get_ticks()
-    if temps_actuel - timer_prochain_lot > intervalle_lots and lot_actuel < len(lots_fruits):
-        timer_prochain_lot = temps_actuel
-        taille_lot = lots_fruits[lot_actuel]
-        fruits.extend(creer_lot_fruits(taille_lot))
-        lot_actuel += 1
-
-    # Déplacement et dessin des fruits
     for fruit in fruits:
-        fruit.deplacer()
-        fruit.dessiner(screen)
+        fruit.move()
+        fruit.draw(screen)
 
-    # Suppression des fruits inactifs
-    fruits = [fruit for fruit in fruits if fruit.actif]
-
+    fruits = [fruit for fruit in fruits if fruit.active]
     pygame.display.flip()
-    horloge.tick(60)  
+    clock.tick(60)
 
 pygame.quit()
-
