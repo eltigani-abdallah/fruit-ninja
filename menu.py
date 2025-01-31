@@ -4,7 +4,14 @@ import pygame_menu
 from pygame_menu import themes
  
 pygame.init()
-surface = pygame.display.set_mode((600, 400))
+surface = pygame.display.set_mode((800, 600))
+ 
+try:
+    background_image = pygame.image.load('image.jpg')
+    background_image = pygame.transform.scale(background_image, (800, 600))
+except pygame.error as e:
+    print(f"Erreur de chargement de l'image : {e}")
+    exit()
  
 def set_difficulty(value, difficulty):
     print(value)
@@ -17,18 +24,25 @@ def start_the_game():
 def level_menu():
     mainmenu._open(level)
  
- 
- 
-mainmenu = pygame_menu.Menu('Welcome', 600, 400, theme=themes.THEME_SOLARIZED)
+
+mytheme = pygame_menu.themes.THEME_DARK.copy()
+mytheme.background_color=(0, 0, 0, 0)
+mytheme.title_background_color=(0, 0, 0)
+font = pygame_menu.font.FONT_8BIT
+mytheme.widget_font = font
+font_title = pygame_menu.font.FONT_DIGITAL
+mytheme.title_font = font_title
+mainmenu = pygame_menu.Menu('Welcome', 800, 600, theme=mytheme)
+
 mainmenu.add.text_input('Name: ', default='username')
 mainmenu.add.button('Play', start_the_game)
 mainmenu.add.button('Levels', level_menu)
 mainmenu.add.button('Quit', pygame_menu.events.EXIT)
  
-level = pygame_menu.Menu('Select a Difficulty', 600, 400, theme=themes.THEME_BLUE)
-level.add.selector('Difficulty :', [('Hard', 1), ('Easy', 2)], onchange=set_difficulty)
+level = pygame_menu.Menu('Select a Difficulty', 800, 600, theme=mytheme)
+level.add.selector('Difficulty :', [('Hard', 1), ('Medium' , 2), ('Easy', 3)], onchange=set_difficulty)
  
-loading = pygame_menu.Menu('Loading the Game...', 600, 400, theme=themes.THEME_DARK)
+loading = pygame_menu.Menu('Loading the Game...', 800, 600, theme=themes.THEME_DARK)
 loading.add.progress_bar("Progress", progressbar_id = "1", default=0, width = 200, )
  
 arrow = pygame_menu.widgets.LeftArrowSelection(arrow_size = (10, 15))
@@ -45,6 +59,9 @@ while True:
                 pygame.time.set_timer(update_loading, 0)
         if event.type == pygame.QUIT:
             exit()
+            
+    # Afficher l'image de fond
+    surface.blit(background_image, (0, 0))        
  
     if mainmenu.is_enabled():
         mainmenu.update(events)
