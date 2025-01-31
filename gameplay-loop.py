@@ -69,6 +69,8 @@ class Fruit:
         self.y = y
         self.speed_x = speed_x
         self.speed_y = speed_y
+        self.original_speed_x= speed_x
+        self.original_speed_y= speed_y
         self.gravity = gravity
         self.active = True
         self.letter= letter
@@ -93,10 +95,10 @@ class Fruit:
 def create_fruit_batch(batch_size):
     fruits = []
     for _ in range(batch_size):
-        x = random.randint(100, SCREEN_WIDTH - 100)  # Starting X position
+        x = random.randint(400, SCREEN_WIDTH - 400)  # Starting X position
         y = SCREEN_HEIGHT  # Fruits start at the bottom
-        speed_x = random.uniform(-5, 5)  
-        speed_y = random.uniform(16, 20)  
+        speed_x = random.uniform(-5, 5) 
+        speed_y = random.uniform(16, 20) 
         gravity = 0.35  # Gravity force
         fruit_image = random.choice(fruit_images)
         fruit_name=fruit_names[fruit_images.index(fruit_image)]
@@ -107,7 +109,7 @@ def create_fruit_batch(batch_size):
         else:
             fruit_type="fruit"
         fruit_letter=random.choice(letter_list)
-        fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type, ))
+        fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type))
     return fruits
 
 # Game variables
@@ -122,24 +124,25 @@ clock = pygame.time.Clock()
 start_time = pygame.time.get_ticks()
 
 # Game loop
-# TODO add strike system
+# TODO add strike system using images
 
 game_running = True
 lives=3
+slow_mode=False
+slow_end=0
 while game_running:
+    current_time = pygame.time.get_ticks()
 
     # Draw the background
     screen.blit(background_image, (0, 0))
     print_text(screen, 0,0,f"Score: {score}", 50,WHITE)
-    print_text(screen, 1075, 0, f"lives: {lives}",50, WHITE)
+    print_text(screen, 500, 0, f"lives: {lives}",50, WHITE)
 
     for fruit in fruits:
-        if fruit.y>SCREEN_HEIGHT and fruit.type!="bomb" and fruit.type!="ice":
-            fruit.active=False
-            print("missed me!")
-            lives-=1
-        if fruit.type!="ice":
-            fruit.active=False
+        if fruit.y>=SCREEN_HEIGHT and fruit.type!="bomb" and fruit.type!="ice":
+            if not slow_mode:
+                fruit.active=False
+                lives-=1
                 
 
                 
@@ -154,18 +157,12 @@ while game_running:
             for fruit in fruits:
                 if fruit.active and pinput==fruit.letter:
                     if fruit.type== "bomb":
-                        print("BOOM")
                         fruit.active=False
                         lives=-1
                     elif fruit.type== "ice":
-                        print("TOKI YO, TOMARE!!")
-                        print_text(screen,400, 50, "SLO-MO", 50, LIGHTBLUE)
-                        clock.tick(15)
-                        if current_time==5:
-                            clock.tick(60)
-
+                        slow_mode=True
+                        slow_end=pygame.time.get_ticks()+2000
                         fruit.active=False
-                        #TODO add time stop
                     else:
                         score+=1
                         fruit.active=False
@@ -173,12 +170,22 @@ while game_running:
 
 
     # Check if it's time to add a new batch of fruits
-    current_time = pygame.time.get_ticks()
+    
     if current_time - next_batch_timer > batch_interval and current_batch < len(fruit_batches):
         next_batch_timer = current_time
         batch_size = fruit_batches[current_batch]
         fruits.extend(create_fruit_batch(batch_size))
         current_batch += 1
+    if slow_mode:
+        for fruit in fruits:
+            fruit.speed_y *= 0.5
+            fruit.speed_x *= 0.5
+    
+    if slow_mode and current_time>slow_end:
+        slow_mode=False
+        for fruit in fruits:
+            fruit.speed_x= fruit.original_speed_x
+            fruit.speed_y= fruit.original_speed_y
 
     # Move and draw the fruits
     for fruit in fruits:
@@ -193,6 +200,7 @@ while game_running:
         print_text(screen, 400, SCREEN_HEIGHT/2, "GAME OVER", 100, WHITE)
 
     pygame.display.flip()
-    clock.tick(60)  
+    clock.tick(60)
+    #print(f"active fruits: {len(fruits)}")
 
 pygame.quit()
