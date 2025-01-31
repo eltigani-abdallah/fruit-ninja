@@ -130,6 +130,9 @@ game_running = True
 lives=3
 slow_mode=False
 slow_end=0
+
+combo_message=""
+combo_display_time=0
 while game_running:
     current_time = pygame.time.get_ticks()
 
@@ -152,21 +155,33 @@ while game_running:
             game_running = False
         if event.type==pygame.KEYDOWN:
             pinput=event.unicode.upper()
+            fruit_hit=[fruit for fruit in fruits if fruit.active and pinput==fruit.letter]
             if pinput=="Å":
                 lives=3
-            for fruit in fruits:
-                if fruit.active and pinput==fruit.letter:
-                    if fruit.type== "bomb":
-                        fruit.active=False
-                        lives=-1
-                    elif fruit.type== "ice":
-                        slow_mode=True
-                        slow_end=pygame.time.get_ticks()+2000
-                        fruit.active=False
-                    else:
-                        score+=1
-                        fruit.active=False
+
+            '''print(f"Key Pressed: {pinput}, Fruits Hit: {len(fruit_hit)}")
+            for fruit in fruit_hit:
+                print(f"Hit Fruit: {fruit.letter}, Type: {fruit.type}, Position: ({fruit.x}, {fruit.y})")'''
+
+    
+            if len(fruit_hit)>=3:
+                combo_message=f"COMBO X{len(fruit_hit)}"
+                combo_display_time=pygame.time.get_ticks()+2000
+                bonus_score=2 if len(fruit_hit)==3 else 3
+                score+= bonus_score
             
+            for fruit in fruit_hit:
+                if fruit.type== "bomb":
+                    fruit.active=False
+                    lives=-1
+                elif fruit.type== "ice":
+                    slow_mode=True
+                    slow_end=pygame.time.get_ticks()+2000
+                    fruit.active=False
+                else:
+                    score+=1
+                    fruit.active=False
+        
 
 
     # Check if it's time to add a new batch of fruits
@@ -186,6 +201,9 @@ while game_running:
         for fruit in fruits:
             fruit.speed_x= fruit.original_speed_x
             fruit.speed_y= fruit.original_speed_y
+    
+    if combo_message and current_time<combo_display_time:
+        print_text(screen, 0, 50, combo_message, 25, (255,255,0))
 
     # Move and draw the fruits
     for fruit in fruits:
