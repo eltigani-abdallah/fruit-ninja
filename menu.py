@@ -7,7 +7,7 @@ pygame.init()
 surface = pygame.display.set_mode((800, 600))
  
 try:
-    background_image = pygame.image.load('image.jpg')
+    background_image = pygame.image.load('background-menu.jpg')
     background_image = pygame.transform.scale(background_image, (800, 600))
 except pygame.error as e:
     print(f"Erreur de chargement de l'image : {e}")
@@ -42,12 +42,13 @@ mainmenu.add.button('Quit', pygame_menu.events.EXIT)
 level = pygame_menu.Menu('Select a Difficulty', 800, 600, theme=mytheme)
 level.add.selector('Difficulty :', [('Hard', 1), ('Medium' , 2), ('Easy', 3)], onchange=set_difficulty)
  
-loading = pygame_menu.Menu('Loading the Game...', 800, 600, theme=themes.THEME_DARK)
+loading = pygame_menu.Menu('Loading the Game...', 800, 600, theme=mytheme)
 loading.add.progress_bar("Progress", progressbar_id = "1", default=0, width = 200, )
  
 arrow = pygame_menu.widgets.LeftArrowSelection(arrow_size = (10, 15))
  
 update_loading = pygame.USEREVENT + 0
+
  
 while True:
     events = pygame.event.get()
