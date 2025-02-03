@@ -18,18 +18,35 @@ pygame.display.set_caption('Fruit Ninja')
 # Define the script directory path
 BASE_DIR = ".\\"
 
+#Function to return to the main menu
+def return_to_main_menu():
+    second_menu.close()
+    menu()
+    
 def set_difficulty(value, difficulty):
     print(value)
     print(difficulty)
+    
+def reset_game_variables():
+    """Reset essential game variables when restarting."""
+    global fruits, score, lives, current_batch
+    fruits = []
+    score = 0
+    lives = 3
+    current_batch = 0
 
+#Starts the game and initializes the loading bar properly
 def start_the_game():
+    loading.get_widget("1").set_value(0) # Reset the loading bar to 0
     mainmenu._open(loading)
-    pygame.time.set_timer(update_loading, 30)
-
+    pygame.time.set_timer(update_loading, 30) # Restart the loading timer
+    reset_game_variables()
+    
+# Navigate to the level menu
 def level_menu():
     mainmenu._open(level)
 
-
+# Create a custom theme for the menu
 mytheme = pygame_menu.themes.THEME_DARK.copy()
 mytheme.background_color=(0, 0, 0, 0)
 mytheme.title_background_color=(0, 0, 0)
@@ -39,36 +56,49 @@ font_title = pygame_menu.font.FONT_DIGITAL
 mytheme.title_font = font_title
 mainmenu = pygame_menu.Menu('Welcome', 1200, 600, theme=mytheme)
 
+# Main menu
 mainmenu.add.text_input('Name: ', default='username')
 mainmenu.add.button('Play', start_the_game)
 mainmenu.add.button('Levels', level_menu)
 mainmenu.add.button('Quit', pygame_menu.events.EXIT)
 
+# Secondary menu with Restart, Return, and Quit options
+second_menu = pygame_menu.Menu('Game Options', 1200, 600, theme=mytheme)
+second_menu.add.button('Restart Game', start_the_game)
+second_menu.add.button('Return to Main Menu', return_to_main_menu)
+second_menu.add.button('Quit', pygame_menu.events.EXIT) 
+
+# Level selection menu
 level = pygame_menu.Menu('Select a Difficulty', 1200, 600, theme=mytheme)
 level.add.selector('Difficulty :', [('Hard', 1), ('Medium' , 2), ('Easy', 3)], onchange=set_difficulty)
 
+# Loading screen menu
 loading = pygame_menu.Menu('Loading the Game...', 1200, 600, theme=mytheme)
 loading.add.progress_bar("Progress", progressbar_id = "1", default=0, width = 200, )
 
+# Arrow selection widget for the menu
 arrow = pygame_menu.widgets.LeftArrowSelection(arrow_size = (10, 15))
 
+# Event constant for updating the loading bar
 update_loading = pygame.USEREVENT + 0
 
+#Handles the main menu and transitions to game
 def menu():
     while True:
         events = pygame.event.get()
         for event in events:
             if event.type == update_loading:
                 progress = loading.get_widget("1")
-                progress.set_value(progress.get_value() + 1)
-                if progress.get_value() == 100:
+                if progress.get_value() < 100:
+                    progress.set_value(progress.get_value() + 1)
+                else:    
                     pygame.time.set_timer(update_loading, 0)
                     game_loop()
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
                 
-        # Afficher l'image de fond
+        # Display the background image
         screen.blit(background_image, (0, 0))        
     
         if mainmenu.is_enabled():
@@ -76,6 +106,32 @@ def menu():
             mainmenu.draw(screen)
             if (mainmenu.get_current().get_selected_widget()):
                 arrow.draw(screen, mainmenu.get_current().get_selected_widget())
+                
+        pygame.display.update()         
+                
+def secondMenu():
+    while True:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == update_loading:
+                progress = loading.get_widget("1")
+                if progress.get_value() < 100:
+                    progress.set_value(progress.get_value() + 1)
+                else:
+                    pygame.time.set_timer(update_loading, 0)
+                    game_loop()  # Correctly restart the game loop
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+                
+        # Display the background image
+        screen.blit(background_image, (0, 0))        
+    
+        if second_menu.is_enabled():
+            second_menu.update(events)
+            second_menu.draw(screen)
+            if (second_menu.get_current().get_selected_widget()):
+                arrow.draw(screen, second_menu.get_current().get_selected_widget())
         
         pygame.display.update()        
 
@@ -97,12 +153,12 @@ pygame.mixer.music.play(-1)  # Loop indefinitely
 pygame.mixer.music.set_volume(0.3) 
 
 
-
+#Color definitions
 WHITE=(255,255,255)
 BLACK=(0,0,0)
 LIGHTBLUE=(173,216,230)
 
-#list of all uppercase letters A-Z
+#List of all uppercase letters A-Z
 letter_list=list(string.ascii_uppercase)
 
 
@@ -131,6 +187,7 @@ for name in fruit_names:
         pygame.quit()
         exit()
 
+# Function to draw text with a white outline
 def draw_text(surface, text,pos, size=60, color=(255,255,255), font=None):
     '''draw text on top of surface'''
     if font is None:
@@ -159,21 +216,23 @@ class Fruit:
         self.active = True
         self.letter= letter
         self.type= type
-
+        
+        # Play appropriate sound based on fruit type
         if self.type == "bomb":
             sound_bomb.play()
         if self.type == "ice":
             sound_ice.play()
         else:
             sound_fruit.play()
-        
+            
+    # Move the fruit based on speed and gravity    
     def move(self):
         if self.active:
             self.x += self.speed_x
             self.y -= self.speed_y  # Launching upwards
             self.speed_y -= self.gravity  # Gravity slows down ascent and speeds up fall
 
-
+    # Draw the fruit and the associated letter on the screen
     def draw(self, surface):
             
         if self.active:
@@ -241,9 +300,16 @@ def game_loop():
 
     combo_message=""
     combo_display_time=0
+    
+    
     while game_running:
         current_time = pygame.time.get_ticks()
         letter_list=list(string.ascii_uppercase)
+        keys=pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            mainmenu.reset(1)  # Reset to main menu properly**
+            pygame.time.set_timer(update_loading, 0)
+            return
 
         # Draw the background
         screen.blit(background_image, (0, 0))
@@ -322,6 +388,10 @@ def game_loop():
         if lives<0:
             #placeholder loss screen
             draw_text(screen,"GAME OVER",(400, SCREEN_HEIGHT/2), 100, WHITE)
+            mainmenu.reset(1)  # Reset to main menu properly**
+            pygame.time.set_timer(update_loading, 0)
+            secondMenu()
+            return
 
         pygame.display.flip()
         clock.tick(60)
