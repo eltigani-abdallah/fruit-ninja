@@ -321,12 +321,15 @@ def game_loop():
         draw_text(screen,f"lives: {lives}",(1075,0),50, WHITE)
 
         for fruit in fruits:
-            if fruit.y>=SCREEN_HEIGHT and fruit.type!="bomb" and fruit.type!="ice":
-                if not slow_mode:
-                    fruit.active=False
-                    lives-=1
-            elif fruit.y>=SCREEN_HEIGHT and fruit.type=="bomb" or fruit.type=="ice":
-                fruit.active=False
+            if fruit.y>=SCREEN_HEIGHT:
+                match fruit.type:
+                    case "bomb":
+                        fruit.active=False
+                    case "ice":
+                        fruit.active=False
+                    case _:
+                        lives-=1
+                        fruit.active=False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
