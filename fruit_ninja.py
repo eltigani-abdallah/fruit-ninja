@@ -161,6 +161,18 @@ LIGHTBLUE=(173,216,230)
 #List of all uppercase letters A-Z
 letter_list=list(string.ascii_uppercase)
 
+#images to represent lives
+lives3img=pygame.image.load(os.path.join(BASE_DIR, "assets\\lives\\strike0.png"))
+lives3img=pygame.transform.scale(lives3img, (175,120))
+
+lives2img=pygame.image.load(os.path.join(BASE_DIR, "assets\\lives\\strike1.png"))
+lives2img=pygame.transform.scale(lives2img, (175,120))
+
+lives1img=pygame.image.load(os.path.join(BASE_DIR, "assets\\lives\\strike2.png"))
+lives1img=pygame.transform.scale(lives1img, (175,120))
+
+lives0img=pygame.image.load(os.path.join(BASE_DIR, "assets\\lives\\strike3.png"))
+lives0img=pygame.transform.scale(lives0img, (175,120))
 
 
 
@@ -289,12 +301,6 @@ def game_loop():
     start_time = pygame.time.get_ticks()
 
 
-    # Game loop
-
-
-    # TODO add strike system using images
-
-    #score and lives for gameplay loop
     score=0
 
     game_running = True
@@ -318,7 +324,15 @@ def game_loop():
         # Draw the background
         screen.blit(background_image, (0, 0))
         draw_text(screen,f"Score: {score}",(0,0), 50,WHITE)
-        draw_text(screen,f"lives: {lives}",(1075,0),50, WHITE)
+        #draw_text(screen,f"lives: {lives}",(1075,0),50, WHITE)
+        if lives==3:
+            screen.blit(lives3img, (1025,0))
+        if lives==2:
+            screen.blit(lives2img, (1025,0))
+        if lives==1:
+            screen.blit(lives1img, (1025,0))
+        if lives==0:
+            screen.blit(lives0img, (1025,0))
 
         for fruit in fruits:
             if fruit.y>=SCREEN_HEIGHT:
