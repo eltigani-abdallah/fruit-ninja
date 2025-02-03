@@ -24,8 +24,9 @@ def return_to_main_menu():
     menu()
     
 def set_difficulty(value, difficulty):
-    print(value)
-    print(difficulty)
+    global difficulty_level
+    difficulty_level = difficulty  # Store the selected difficulty level
+    print(f"Selected Difficulty: {value}, Difficulty Level: {difficulty_level}")
     
 def reset_game_variables():
     """Reset essential game variables when restarting."""
@@ -41,6 +42,10 @@ def start_the_game():
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30) # Restart the loading timer
     reset_game_variables()
+    try:
+        game_loop(difficulty_level)  # Pass the difficulty level when starting the game
+    except NameError:
+        game_loop(1)
     
 # Navigate to the level menu
 def level_menu():
@@ -70,7 +75,7 @@ second_menu.add.button('Quit', pygame_menu.events.EXIT)
 
 # Level selection menu
 level = pygame_menu.Menu('Select a Difficulty', 1200, 600, theme=mytheme)
-level.add.selector('Difficulty :', [('Hard', 1), ('Medium' , 2), ('Easy', 3)], onchange=set_difficulty)
+level.add.selector('Difficulty :', [('Easy', 1), ('Medium', 2), ('Hard', 3)], onchange=set_difficulty)
 
 # Loading screen menu
 loading = pygame_menu.Menu('Loading the Game...', 1200, 600, theme=mytheme)
@@ -254,14 +259,14 @@ class Fruit:
 
 
 # Function to create a batch of fruits
-def create_fruit_batch(batch_size):
+def create_fruit_batch(batch_size, difficulty_level):
     fruits = []
     letter_list=list(string.ascii_uppercase)
     if len(letter_list)==0:
         letter_list=list(string.ascii_uppercase)
     bomb_letter=random.choice(letter_list)
     letter_list.remove(bomb_letter)
-    for _ in range(batch_size):
+    for _ in range(batch_size * difficulty_level):
         x = random.randint(400, SCREEN_WIDTH - 400)  # Starting X position
         y = SCREEN_HEIGHT  # Fruits start at the bottom
         speed_x = random.uniform(-3, 3) 
@@ -288,7 +293,7 @@ def create_fruit_batch(batch_size):
     return fruits
 
 
-def game_loop():
+def game_loop(difficulty_level):
 # Game variables
     fruit_batches = [1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 3, 2, 2, 4, 3, 4, 2, 1, 2, 1, 2, 3, 2, 2, 1, 2, 1, 2, 3, 3]  # Sequence of batches
     current_batch = 0
@@ -382,8 +387,9 @@ def game_loop():
         if current_time - next_batch_timer > batch_interval and current_batch < len(fruit_batches):
             next_batch_timer = current_time
             batch_size = fruit_batches[current_batch]
-            fruits.extend(create_fruit_batch(batch_size))
+            fruits.extend(create_fruit_batch(batch_size, difficulty_level))  # Pass the difficulty level
             current_batch += 1
+            
         if slow_mode:
             for fruit in fruits:
                 fruit.speed_y *= 0.5
