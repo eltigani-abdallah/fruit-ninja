@@ -23,6 +23,8 @@ def set_difficulty(value, difficulty):
     print(difficulty)
 
 def start_the_game():
+    progress=loading.get_widget("1")
+    progress.set_value(0)
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30)
 
@@ -110,7 +112,7 @@ letter_list=list(string.ascii_uppercase)
 
 # Background image
 try:
-    background_image = pygame.image.load(os.path.join(BASE_DIR, "assets\\background\\background3.jpg"))
+    background_image = pygame.image.load(os.path.join(BASE_DIR, "assets\\background\\background1.jpg"))
     background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 except FileNotFoundError:
     print("background.jpg not found.")
@@ -185,6 +187,9 @@ class Fruit:
 # Function to create a batch of fruits
 def create_fruit_batch(batch_size):
     fruits = []
+    letter_list=list(string.ascii_uppercase)
+    if len(letter_list)==0:
+        letter_list=list(string.ascii_uppercase)
     bomb_letter=random.choice(letter_list)
     letter_list.remove(bomb_letter)
     for _ in range(batch_size):
@@ -209,6 +214,7 @@ def create_fruit_batch(batch_size):
             fruit_letter=bomb_letter
         else:
             fruit_letter=random.choice(letter_list)
+            letter_list.remove(fruit_letter)
         fruits.append(Fruit(fruit_image, x, y, speed_x, speed_y, gravity, fruit_letter, fruit_type))
     return fruits
 
@@ -243,7 +249,11 @@ def game_loop():
     combo_display_time=0
     while game_running:
         current_time = pygame.time.get_ticks()
-        letter_list=list(string.ascii_uppercase)
+        #letter_list=list(string.ascii_uppercase)
+        keys=pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            mainmenu._open(mainmenu)
+            return
 
         # Draw the background
         screen.blit(background_image, (0, 0))
@@ -255,6 +265,8 @@ def game_loop():
                 if not slow_mode:
                     fruit.active=False
                     lives-=1
+            elif fruit.y>=SCREEN_HEIGHT and fruit.type=="bomb" or fruit.type=="ice":
+                fruit.active=False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -264,8 +276,9 @@ def game_loop():
             if event.type==pygame.KEYDOWN:
                 pinput=event.unicode.upper()
                 fruit_hit=[fruit for fruit in fruits if fruit.active and pinput==fruit.letter]
-                if pinput=="Å":
-                    lives=3
+                '''if pinput=="Å":
+                    lives=3'''
+                
 
                 if len(fruit_hit)>=3:
                     combo_message=f"COMBO X{len(fruit_hit)}"
@@ -322,6 +335,10 @@ def game_loop():
         if lives<0:
             #placeholder loss screen
             draw_text(screen,"GAME OVER",(400, SCREEN_HEIGHT/2), 100, WHITE)
+            pygame.display.flip()
+            pygame.time.delay(2000)
+            mainmenu._open(mainmenu)
+            return
 
         pygame.display.flip()
         clock.tick(60)
