@@ -32,8 +32,8 @@ font = pygame_menu.font.FONT_8BIT
 mytheme.widget_font = font
 font_title = pygame_menu.font.FONT_DIGITAL
 mytheme.title_font = font_title
-mainmenu = pygame_menu.Menu('Welcome', 800, 600, theme=mytheme)
 
+mainmenu = pygame_menu.Menu('Welcome', 800, 600, theme=mytheme)
 mainmenu.add.text_input('Name: ', default='username')
 mainmenu.add.button('Play', start_the_game)
 mainmenu.add.button('Levels', level_menu)
