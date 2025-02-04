@@ -107,7 +107,8 @@ def menu():
                 arrow.draw(screen, mainmenu.get_current().get_selected_widget())
                 
         pygame.display.update()         
-                
+
+
 def secondMenu():
     while True:
         events = pygame.event.get()
@@ -154,8 +155,6 @@ pygame.mixer.music.set_volume(0.3)
 
 #Color definitions
 WHITE=(255,255,255)
-BLACK=(0,0,0)
-LIGHTBLUE=(173,216,230)
 
 #List of all uppercase letters A-Z
 letter_list=list(string.ascii_uppercase)
@@ -189,7 +188,11 @@ fruit_names = ["kiwi.png", "pineapple.png", "grape.png", "lemon.png", "watermelo
 "bomb.png", "ice.png"]
 
 fruit_images = []
+
+
 for name in fruit_names:
+
+
     try:
         image_path = os.path.join(BASE_DIR,"assets\\fruit", name)
         fruit_images.append(pygame.image.load(image_path))
@@ -197,6 +200,7 @@ for name in fruit_names:
         print(f"Loading error: file {name} not found!")
         pygame.quit()
         exit()
+
 
 # Function to draw text with a white outline
 def draw_text(surface, text,pos, size=60, color=(255,255,255), font=None):
@@ -289,16 +293,14 @@ def create_fruit_batch(batch_size, difficulty_level):
 
 def game_loop(difficulty_level):
 # Game variables
-    fruit_batches = [1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 1, 3, 2, 2, 4, 3, 4, 2, 1, 2, 1, 2, 3, 2, 2, 1, 2, 1, 2, 3, 3]  # Sequence of batches
+    fruit_batches = [1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2,\
+                    2, 2, 1, 3, 2, 2, 4, 3, 4, 2, 1, 2, 1, 2, 3, 2, 2, 1, 2, 1, 2, 3, 3]  # Sequence of batches
     current_batch = 0
     fruits = []
     next_batch_timer = 0
     batch_interval = 2500  # Interval between batches (in milliseconds)
 
-
     clock = pygame.time.Clock()
-
-
 
     score=0
 
@@ -310,11 +312,11 @@ def game_loop(difficulty_level):
     combo_message=""
     combo_display_time=0
     
-    
     while game_running:
         current_time = pygame.time.get_ticks()
 
         keys=pygame.key.get_pressed()
+
         if keys[pygame.K_ESCAPE]:
             mainmenu.reset(1)  # Reset to main menu properly**
             pygame.time.set_timer(update_loading, 0)
@@ -323,7 +325,7 @@ def game_loop(difficulty_level):
         # Draw the background
         screen.blit(background_image, (0, 0))
         draw_text(screen,f"Score: {score}",(0,0), 50,WHITE)
-        #draw_text(screen,f"lives: {lives}",(1075,0),50, WHITE)
+
         if lives==3:
             screen.blit(lives3img, (1025,0))
         if lives==2:
@@ -353,7 +355,6 @@ def game_loop(difficulty_level):
                 pinput=event.unicode.upper()
                 fruit_hit=[fruit for fruit in fruits if fruit.active and pinput==fruit.letter]
 
-
                 if len(fruit_hit)>=3:
                     combo_message=f"COMBO X{len(fruit_hit)}"
                     combo_display_time=pygame.time.get_ticks()+2000
@@ -375,7 +376,6 @@ def game_loop(difficulty_level):
 
 
         # Check if it's time to add a new batch of fruits
-        
         if current_time - next_batch_timer > batch_interval and current_batch < len(fruit_batches):
             next_batch_timer = current_time
             batch_size = fruit_batches[current_batch]
@@ -417,8 +417,6 @@ def game_loop(difficulty_level):
 
         pygame.display.flip()
         clock.tick(60)
-
-
 
 menu()
 
