@@ -28,20 +28,14 @@ def set_difficulty(value, difficulty):
     difficulty_level = difficulty  # Store the selected difficulty level
     print(f"Selected Difficulty: {value}, Difficulty Level: {difficulty_level}")
     
-def reset_game_variables():
-    """Reset essential game variables when restarting."""
-    global fruits, score, lives, current_batch
-    fruits = []
-    score = 0
-    lives = 3
-    current_batch = 0
+
 
 #Starts the game and initializes the loading bar properly
 def start_the_game():
     loading.get_widget("1").set_value(0) # Reset the loading bar to 0
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30) # Restart the loading timer
-    reset_game_variables()
+
     try:
         game_loop(difficulty_level)  # Pass the difficulty level when starting the game
     except NameError:
@@ -303,7 +297,7 @@ def game_loop(difficulty_level):
 
 
     clock = pygame.time.Clock()
-    start_time = pygame.time.get_ticks()
+
 
 
     score=0
@@ -319,7 +313,7 @@ def game_loop(difficulty_level):
     
     while game_running:
         current_time = pygame.time.get_ticks()
-        letter_list=list(string.ascii_uppercase)
+
         keys=pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE]:
             mainmenu.reset(1)  # Reset to main menu properly**
@@ -358,9 +352,7 @@ def game_loop(difficulty_level):
             if event.type==pygame.KEYDOWN:
                 pinput=event.unicode.upper()
                 fruit_hit=[fruit for fruit in fruits if fruit.active and pinput==fruit.letter]
-                '''if pinput=="Å":
-                    lives=3'''
-                
+
 
                 if len(fruit_hit)>=3:
                     combo_message=f"COMBO X{len(fruit_hit)}"
